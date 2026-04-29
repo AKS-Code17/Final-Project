@@ -11,5 +11,9 @@ class Character():
 
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
+    
+    def update(self, dx, dy):
+        self.x += dx
+        self.y += dy
 
     
