@@ -10,6 +10,7 @@ import random
 from obstacle import Obstacle
 from coin import coin
 from pygame import mixer
+from button import button
 
 #Screen dimensions
 SCREEN_WIDTH = 600
@@ -17,19 +18,23 @@ SCREEN_HEIGHT = 400
 
 color = (255, 0, 0)
 OBSTACLE_CHANCE = 5
+POWERUP_CHANCE = 2
 OBSTACLE_WIDTH = 50
 OBSTACLE_HEIGHT = 50
 COIN_CHANCE = 10
 speed = 5
 COIN_RADIUS = 10
+BUTTON_HEIGHT = 50
+BUTTON_WIDTH = 50
+
 
 #SOund variables
 mixer.init()
 coin_sound = pygame.mixer.Sound('Coin_Noise.mp3')
-coin_sound.set_volume(0.8)
+coin_sound.set_volume(1)
 
 lose_sound = pygame.mixer.Sound('Lose_Noise.mp3')
-lose_sound.set_volume(0.8)
+lose_sound.set_volume(1)
 played = False
 #Losing conditions - wait is for delay before losing screen
 lose = False
@@ -52,6 +57,8 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 
 pressed = False 
 
+powerup_clock = 0
+
 #Generate obstacles and coins at random intervals and positions - they are spaced apart
 def generate_obstacle():
     if (len(obstacle_list) == 0 and len(coin_list) == 0) or (len(obstacle_list) > 0 and len(coin_list) > 0 and obstacle_list[-1].y > 200 and coin_list[-1].y > 200):
@@ -66,17 +73,59 @@ def generate_coin():
     if (len(coin_list) == 0 and len(obstacle_list) == 0) or (len(coin_list) > 0 and len(obstacle_list) > 0 and coin_list[-1].y > 200 and obstacle_list[-1].y > 200):
         if random.randint(0, COIN_CHANCE) == 0:
             coin_x = random.choice([100, 300, 500])
-            coin_obj = coin(coin_x, 0, COIN_RADIUS, (255, 255, 0)) 
+            if random.randint(0, 1) == 0:
+                coin_obj = coin(coin_x, 0, COIN_RADIUS, (255, 165, 0))
+            else:
+                coin_obj = coin(coin_x, 0, COIN_RADIUS, (255, 255, 0)) 
             return coin_obj
     pass
 
+main = False
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
 
-    if wait < 25:
-        key = pygame.key.get_pressed()
+    #Main menu for color selection
+    if main == False:
+        #Creating buttons and checking for clicks to change character color and start game
+        screen.fill((0, 0, 0))
+        font = pygame.font.SysFont(None, 55)
+        text = font.render('Choose Your Color!', True, (255, 255, 255))
+        screen.blit(text, (SCREEN_WIDTH//2 - text.get_width()//2, 50))
+
+
+        button_red = button(200, 100, BUTTON_WIDTH, BUTTON_HEIGHT, (255, 0, 0))
+        button_green = button(400, 100, BUTTON_WIDTH, BUTTON_HEIGHT, (0, 255, 0))
+        button_brown = button(200, 300, BUTTON_WIDTH, BUTTON_HEIGHT, (150, 75, 0))
+        button_pink = button(400, 300, BUTTON_WIDTH, BUTTON_HEIGHT, (255, 0, 200))
+        button_red.draw(screen)
+        button_green.draw(screen)
+        button_brown.draw(screen)
+        button_pink.draw(screen)
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            if (200 <= mouse_x <= 200 + BUTTON_WIDTH and 100 <= mouse_y <= 100 + BUTTON_HEIGHT):
+                character.color = (255, 0, 0)
+                main = True
+            elif (400 <= mouse_x <= 400 + BUTTON_WIDTH and 100 <= mouse_y <= 100 + BUTTON_HEIGHT):
+                character.color = (0, 255, 0)
+                main = True
+            elif (200 <= mouse_x <= 200 + BUTTON_WIDTH and 300 <= mouse_y <= 300 + BUTTON_HEIGHT):
+                character.color = (150, 75, 0)
+                main = True
+            elif (400 <= mouse_x <= 400 + BUTTON_WIDTH and 300 <= mouse_y <= 300 + BUTTON_HEIGHT):
+                character.color = (255, 0, 200)
+                main = True
+
+
+        
+
+
+    if wait < 25 and main == True:
+        key = pygame.key.get_pressed()  
+
 
         #Update character position
         if lose == False:
@@ -134,7 +183,8 @@ while True:
             coin_list.append(new_coin)
         for c in coin_list[:]:
             c.draw(screen)
-            c.y += speed
+            if lose == False:
+                c.y += speed
             if c.y > SCREEN_HEIGHT:
                 coin_list.remove(c)
 
@@ -148,7 +198,8 @@ while True:
                 character.x + character.radius*2 > obs.x and
                 character.y < obs.y + obs.height and
                 character.y + character.radius*2 > obs.y):
-                lose = True
+                if powerup_clock <= 0:
+                    lose = True
 
         for c in coin_list:
             if (character.x < c.x + c.radius and
@@ -156,7 +207,8 @@ while True:
                 character.y < c.y + c.radius and
                 character.y + character.radius*2 > c.y):
                 coin_list.remove(c)
-
+                if c.color == (255, 165, 0):
+                    powerup_clock = 50
                 score += 1
                 coin_sound.play()
         
@@ -174,9 +226,12 @@ while True:
         font = pygame.font.SysFont(None, 35)
         text = font.render(f'Score: {score}', True, (255, 255, 255))
         screen.blit(text, (SCREEN_WIDTH//2 - text.get_width()//2, SCREEN_HEIGHT - text.get_height()))
+        if powerup_clock > 0:
+            character.color = (255, 165, 0)
+        powerup_clock -= 1
 
     #Losing screen
-    else:
+    if wait >= 25 and lose == True and main == True:
         screen.fill((0, 0, 0))
         font = pygame.font.SysFont(None, 55)
         text = font.render('You Lose!', True, (255, 0, 0))
