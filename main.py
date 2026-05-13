@@ -18,7 +18,7 @@ SCREEN_HEIGHT = 400
 
 color = (255, 0, 0)
 OBSTACLE_CHANCE = 5
-POWERUP_CHANCE = 2
+POWERUP_CHANCE = 20
 OBSTACLE_WIDTH = 50
 OBSTACLE_HEIGHT = 50
 COIN_CHANCE = 10
@@ -73,7 +73,7 @@ def generate_coin():
     if (len(coin_list) == 0 and len(obstacle_list) == 0) or (len(coin_list) > 0 and len(obstacle_list) > 0 and coin_list[-1].y > 200 and obstacle_list[-1].y > 200):
         if random.randint(0, COIN_CHANCE) == 0:
             coin_x = random.choice([100, 300, 500])
-            if random.randint(0, 1) == 0:
+            if random.randint(0, POWERUP_CHANCE) == 0:
                 coin_obj = coin(coin_x, 0, COIN_RADIUS, (255, 165, 0))
             else:
                 coin_obj = coin(coin_x, 0, COIN_RADIUS, (255, 255, 0)) 
@@ -108,15 +108,19 @@ while True:
             mouse_x, mouse_y = pygame.mouse.get_pos()
             if (200 <= mouse_x <= 200 + BUTTON_WIDTH and 100 <= mouse_y <= 100 + BUTTON_HEIGHT):
                 character.color = (255, 0, 0)
+                color = (255, 0, 0)
                 main = True
             elif (400 <= mouse_x <= 400 + BUTTON_WIDTH and 100 <= mouse_y <= 100 + BUTTON_HEIGHT):
                 character.color = (0, 255, 0)
+                color = (0, 255, 0)
                 main = True
             elif (200 <= mouse_x <= 200 + BUTTON_WIDTH and 300 <= mouse_y <= 300 + BUTTON_HEIGHT):
                 character.color = (150, 75, 0)
+                color = (150, 75, 0)
                 main = True
             elif (400 <= mouse_x <= 400 + BUTTON_WIDTH and 300 <= mouse_y <= 300 + BUTTON_HEIGHT):
                 character.color = (255, 0, 200)
+                color = (255, 0, 200)
                 main = True
 
 
@@ -153,11 +157,10 @@ while True:
                         character.x = 600
                         position = 4
                     pressed = True
-
+        
+        #Checks if keys are being released
             if key[pygame.K_LEFT] == False and key[pygame.K_RIGHT] == False:
                 pressed = False
-        #if event.type == pygame.KEYUP:
-            #if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
             
         #Drawing Bg, character, and obstacles
         screen.fill((0, 0, 0))
@@ -207,6 +210,7 @@ while True:
                 character.y < c.y + c.radius and
                 character.y + character.radius*2 > c.y):
                 coin_list.remove(c)
+                #Powerup check
                 if c.color == (255, 165, 0):
                     powerup_clock = 50
                 score += 1
@@ -229,6 +233,8 @@ while True:
         if powerup_clock > 0:
             character.color = (255, 165, 0)
         powerup_clock -= 1
+        if powerup_clock <= 0 and lose == False:
+            character.color = color
 
     #Losing screen
     if wait >= 25 and lose == True and main == True:
